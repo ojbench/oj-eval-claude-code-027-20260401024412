@@ -335,6 +335,28 @@ private:
             currentLine = lineNum;
             return;
         }
+
+        // Handle direct assignment (without LET keyword): var = expr
+        size_t eqPos = cmd.find('=');
+        if (eqPos != string::npos && eqPos > 0) {
+            string varName = trim(cmd.substr(0, eqPos));
+            // Check if it's a valid variable name
+            if (!varName.empty() && isVarStart(varName[0])) {
+                bool validName = true;
+                for (char c : varName) {
+                    if (!isVarChar(c)) {
+                        validName = false;
+                        break;
+                    }
+                }
+                if (validName) {
+                    string expr = trim(cmd.substr(eqPos + 1));
+                    int value = evaluateExpression(expr);
+                    scopeManager.setVariable(varName, value);
+                    return;
+                }
+            }
+        }
     }
 
 public:

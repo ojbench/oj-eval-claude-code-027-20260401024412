@@ -36,6 +36,15 @@ public:
     }
 
     void setVariable(const string& name, int value) {
+        // Search for existing variable from inner to outer scopes
+        for (int i = scopes.size() - 1; i >= 0; i--) {
+            if (scopes[i].find(name) != scopes[i].end()) {
+                // Found it - update in that scope
+                scopes[i][name] = value;
+                return;
+            }
+        }
+        // Not found - create in current (innermost) scope
         scopes.back()[name] = value;
     }
 

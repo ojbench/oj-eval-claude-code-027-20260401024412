@@ -31,6 +31,10 @@ public:
         }
     }
 
+    size_t scopeCount() const {
+        return scopes.size();
+    }
+
     void setVariable(const string& name, int value) {
         scopes.back()[name] = value;
     }
@@ -214,15 +218,14 @@ private:
 
         // Handle END (pop scope or end program)
         if (cmdUpper == "END") {
-            // Check if there are multiple scopes
-            // If yes, pop scope; otherwise, end program
-            if (scopeManager.hasVariable("__end_is_scope__") || true) {
-                // Always try to pop first
-                size_t scopesBefore = 1; // We can't check easily, so just pop
+            // If there are multiple scopes (more than just global), pop the innermost scope
+            // Otherwise, end the program
+            if (scopeManager.scopeCount() > 1) {
                 scopeManager.popScope();
-                // If that was the last scope command, it ends the program
-                return;
+            } else {
+                ended = true;
             }
+            return;
         }
 
         // Handle LET

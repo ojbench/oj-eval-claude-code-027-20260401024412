@@ -276,14 +276,28 @@ private:
                 string condition = trim(cmd.substr(2, thenPos - 2));
                 string thenPart = trim(cmd.substr(thenPos + 4));
 
-                // Parse condition
+                // Parse condition - try operators from longest to shortest
                 bool result = false;
+                bool found = false;
 
-                // Try different comparison operators in order
                 vector<string> ops = {"<=", ">=", "==", "!=", "<>", "<", ">", "="};
                 for (const string& op : ops) {
                     size_t pos = condition.find(op);
-                    if (pos != string::npos) {
+                    if (pos != string::npos && pos > 0) {
+                        // Make sure we're not matching a sub-operator
+                        // For example, don't match "=" in "<="
+                        if (op.length() == 1) {
+                            // Check if this single-char op is part of a two-char op
+                            bool partOfLonger = false;
+                            if (pos > 0 && (condition[pos-1] == '<' || condition[pos-1] == '>' || condition[pos-1] == '!' || condition[pos-1] == '=')) {
+                                partOfLonger = true;
+                            }
+                            if (pos < condition.length() - 1 && (condition[pos+1] == '=' || condition[pos+1] == '>')) {
+                                partOfLonger = true;
+                            }
+                            if (partOfLonger) continue;
+                        }
+
                         string left = trim(condition.substr(0, pos));
                         string right = trim(condition.substr(pos + op.length()));
                         int leftVal = evaluateExpression(left);
@@ -295,11 +309,12 @@ private:
                         else if (op == ">") result = (leftVal > rightVal);
                         else if (op == "<=") result = (leftVal <= rightVal);
                         else if (op == ">=") result = (leftVal >= rightVal);
+                        found = true;
                         break;
                     }
                 }
 
-                if (result) {
+                if (found && result) {
                     // Execute the THEN part
                     string thenUpper = thenPart;
                     for (char& c : thenUpper) c = toupper(c);
